@@ -1,14 +1,19 @@
 import { createBrowserRouter, RouterProvider } from 'react-router'
+import Shell from './shell.js'
 import OrdersPage from './routes/orders/index.js'
+import OrderDetailPage from './routes/orders/detail.js'
+import BriefPage from './routes/briefs/index.js'
 
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <OrdersPage />,
-  },
-  {
-    path: '/orders',
-    element: <OrdersPage />,
+    element: <Shell />,
+    children: [
+      { index: true, element: <OrdersPage /> },
+      { path: 'orders', element: <OrdersPage /> },
+      { path: 'orders/:orderId', element: <OrderDetailPage /> },
+      { path: 'briefs/new', element: <BriefPage /> },
+    ],
   },
 ])
 

@@ -5,9 +5,10 @@ import type { WorkerEnv } from './types/worker-env.js'
 import { auth } from './routes/auth.js'
 import { orders } from './routes/orders.js'
 import { findings } from './routes/findings.js'
+import { briefs } from './routes/briefs.js'
 import { handleScheduled } from './jobs/cron.js'
 
-const app = new Hono<{ Bindings: WorkerEnv }>()
+export const app = new Hono<{ Bindings: WorkerEnv }>()
 
 app.use('*', logger())
 app.use(
@@ -24,6 +25,7 @@ app.get('/api/health', (c) =>
 
 app.route('/api/v1/auth', auth)
 app.route('/api/v1/orders', orders)
+app.route('/api/v1/briefs', briefs)
 app.route('/api/v1/findings', findings)
 
 app.notFound((c) => c.json({ error: 'Not found' }, 404))

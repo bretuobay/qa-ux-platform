@@ -1,31 +1,41 @@
 import { useQuery } from '@tanstack/react-query'
-import type { Order, Finding } from '@qa-ux/contracts'
+import type { Finding, Order } from '@qa-ux/contracts'
+import { api } from '../../api.js'
 
 interface DashboardStats {
   activeOrders: number
   openFindings: number
   completedOrders: number
+  awaitingQuote: number
 }
 
+const OPEN = new Set<Order['status']>([
+  'scope_review',
+  'quoted',
+  'accepted',
+  'payment_pending',
+  'readiness_check',
+  'recruiting',
+  'scheduled',
+  'in_progress',
+  'review',
+  'delivered',
+  'retest',
+  'paused',
+])
+
 async function fetchDashboardStats(): Promise<DashboardStats> {
-  const [ordersRes, findingsRes] = await Promise.all([
-    fetch('/api/v1/orders'),
-    fetch('/api/v1/findings'),
+  const [ordersJson, findingsJson] = await Promise.all([
+    api<{ data: Order[] }>('/api/v1/orders'),
+    api<{ data: Finding[] }>('/api/v1/findings'),
   ])
 
-  if (!ordersRes.ok) throw new Error(`Orders fetch failed: ${ordersRes.status}`)
-  if (!findingsRes.ok) throw new Error(`Findings fetch failed: ${findingsRes.status}`)
-
-  const ordersJson = (await ordersRes.json()) as { data: Order[] }
-  const findingsJson = (await findingsRes.json()) as { data: Finding[] }
-
   const orders = ordersJson.data
-  const findingsData = findingsJson.data
-
   return {
-    activeOrders: orders.filter((o) => o.status === 'active').length,
-    openFindings: findingsData.filter((f) => f.status === 'open').length,
-    completedOrders: orders.filter((o) => o.status === 'completed').length,
+    activeOrders: orders.filter((order) => OPEN.has(order.status)).length,
+    awaitingQuote: orders.filter((order) => order.status === 'scope_review').length,
+    openFindings: findingsJson.data.filter((finding) => finding.status === 'open').length,
+    completedOrders: orders.filter((order) => order.status === 'closed').length,
   }
 }
 
@@ -40,12 +50,13 @@ export function useDashboardViewModel(): DashboardViewModel {
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['dashboard-stats'],
     queryFn: fetchDashboardStats,
+    staleTime: 0,
   })
 
   return {
     stats: data,
     isLoading,
     isError,
-    error: error as Error | null,
+    error: error instanceof Error ? error : null,
   }
 }

@@ -1,5 +1,6 @@
 import { OrderSchema } from '@qa-ux/contracts'
 import type { Order } from '@qa-ux/contracts'
+import { zodErrors } from '../zod-errors.js'
 
 export type ValidationResult =
   | { success: true }
@@ -7,11 +8,6 @@ export type ValidationResult =
 
 export function validateOrder(order: Order): ValidationResult {
   const result = OrderSchema.safeParse(order)
-  if (result.success) {
-    return { success: true }
-  }
-  const errors = result.error.issues.map(
-    (issue) => `${issue.path.join('.')}: ${issue.message}`
-  )
-  return { success: false, errors }
+  if (result.success) return { success: true }
+  return { success: false, errors: zodErrors(result.error) }
 }
