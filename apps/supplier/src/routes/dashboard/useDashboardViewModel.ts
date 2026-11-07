@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import type { Finding, Order } from '@qa-ux/contracts'
+import { isOpenFinding } from '@qa-ux/domain'
 import { api } from '../../api.js'
 
 interface DashboardStats {
@@ -34,7 +35,7 @@ async function fetchDashboardStats(): Promise<DashboardStats> {
   return {
     activeOrders: orders.filter((order) => OPEN.has(order.status)).length,
     awaitingQuote: orders.filter((order) => order.status === 'scope_review').length,
-    openFindings: findingsJson.data.filter((finding) => finding.status === 'open').length,
+    openFindings: findingsJson.data.filter((finding) => isOpenFinding(finding)).length,
     completedOrders: orders.filter((order) => order.status === 'closed').length,
   }
 }
