@@ -16,6 +16,9 @@ export default function Shell() {
             <Link to="/queue" className="hover:underline">
               Queue
             </Link>
+            <Link to="/work" className="hover:underline">
+              Testing work
+            </Link>
           </nav>
         </div>
       </header>

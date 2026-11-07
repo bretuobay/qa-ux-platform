@@ -15,7 +15,7 @@ P0 requirements in the PRD belong to Phase B. P1 items (issue-tracker integratio
 
 Each slice ends with `pnpm typecheck`, `pnpm lint`, `pnpm test`, and `pnpm build` passing.
 
-### B1 — Brief, quote, and order lifecycle (this slice)
+### B1 — Brief, quote, and order lifecycle (shipped)
 
 The spine everything else attaches to. Service status and payment status are different fields, matching section 5.
 
@@ -35,9 +35,9 @@ Not in B1:
 - A database connection. Drizzle tables are in `packages/db`. The worker stores briefs, quotes, orders, and events in memory so the lifecycle can be exercised before Neon is provisioned.
 - iOS recruitment. A brief may name iOS. Delivery stays web and Android until the internal pilot in the PRD.
 
-### B2 — Readiness, matching, and execution
+### B2 — Readiness, matching, and execution (this slice)
 
-REQ 02 immutable builds and environments on the order. REQ 06 readiness blockers and the activity feed backed by the database. REQ 10–12 and 15–16: tester profiles, manual assignment, scenario forms, evidence upload with retries, recruitment slots, replacement history. Access material stays hidden until someone is assigned.
+REQ 02 immutable builds and environments on the order. REQ 06 readiness blockers. REQ 10–12 and 15–16: tester profiles, manual assignment, scenario forms, evidence metadata with a retry state, recruitment slots, replacement history. Access material stays hidden until someone is assigned. Still in memory, with Drizzle tables ready for Neon. The activity feed is still the order event list from B1. A database-backed feed waits for the connection.
 
 ### B3 — Review, findings, retest, and reports
 
