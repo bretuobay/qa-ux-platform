@@ -1,0 +1,32 @@
+name = "qa-ux-worker"
+main = "apps/worker/src/index.ts"
+compatibility_date = "2026-11-07"
+compatibility_flags = ["nodejs_compat"]
+
+[build]
+command = "pnpm --filter worker build"
+
+[[queues.producers]]
+queue = "qa-queue"
+binding = "QA_QUEUE"
+
+[[queues.consumers]]
+queue = "qa-queue"
+max_batch_size = 10
+max_batch_timeout = 5
+
+[[hyperdrive]]
+binding = "HYPERDRIVE"
+id = "STUB_HYPERDRIVE_ID"
+localConnectionString = "postgresql://postgres:password@localhost:5432/qauxdev"
+
+[[r2_buckets]]
+binding = "EVIDENCE_BUCKET"
+bucket_name = "qa-ux-evidence"
+preview_bucket_name = "qa-ux-evidence-preview"
+
+[triggers]
+crons = ["0 * * * *"]
+
+[vars]
+ENVIRONMENT = "development"
