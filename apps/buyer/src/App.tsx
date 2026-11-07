@@ -3,6 +3,7 @@ import Shell from './shell.js'
 import OrdersPage from './routes/orders/index.js'
 import OrderDetailPage from './routes/orders/detail.js'
 import BriefPage from './routes/briefs/index.js'
+import ApplicationsPage from './routes/applications/index.js'
 
 const router = createBrowserRouter([
   {
@@ -13,6 +14,7 @@ const router = createBrowserRouter([
       { path: 'orders', element: <OrdersPage /> },
       { path: 'orders/:orderId', element: <OrderDetailPage /> },
       { path: 'briefs/new', element: <BriefPage /> },
+      { path: 'applications', element: <ApplicationsPage /> },
     ],
   },
 ])

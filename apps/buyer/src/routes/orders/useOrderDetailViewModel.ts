@@ -1,12 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import type { Order, OrderActivity, OrderEvent, Quote } from '@qa-ux/contracts'
+import type { Order, OrderActivity, OrderEvent, ProductBuild, Quote, ReadinessCheck } from '@qa-ux/contracts'
 import { api } from '../../api.js'
 
 interface OrderDetailResponse {
   order: Order
   events: OrderActivity[]
   quotes: Quote[]
+  build: ProductBuild | null
+  blockers: ReadinessCheck[]
 }
 
 export function useOrderDetailViewModel(orderId: string) {
@@ -36,6 +38,8 @@ export function useOrderDetailViewModel(orderId: string) {
     order: query.data?.order,
     events: query.data?.events ?? [],
     quotes: query.data?.quotes ?? [],
+    build: query.data?.build ?? null,
+    blockers: query.data?.blockers ?? [],
     isLoading: query.isLoading,
     isError: query.isError,
     error: query.error instanceof Error ? query.error : null,
