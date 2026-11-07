@@ -13,6 +13,9 @@ export default function Shell() {
             <Link to="/orders" className="hover:underline">
               Orders
             </Link>
+            <Link to="/applications" className="hover:underline">
+              Applications
+            </Link>
             <Link to="/briefs/new" className="hover:underline">
               New brief
             </Link>

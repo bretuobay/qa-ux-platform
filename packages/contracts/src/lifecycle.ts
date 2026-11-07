@@ -65,3 +65,5 @@ export type Platform = z.infer<typeof PlatformSchema>
 /** Local tenant and application ids until sign-in issues a real workspace. */
 export const DEV_BUSINESS_ID = 'a1b2c3d4-e5f6-4789-8abc-def012345678'
 export const DEV_APPLICATION_ID = 'b2c3d4e5-f6a7-4890-9bcd-ef0123456789'
+/** Local tester until sign-in issues a real user id. */
+export const DEV_TESTER_ID = 'c1d2e3f4-a5b6-4789-8abc-def012345678'

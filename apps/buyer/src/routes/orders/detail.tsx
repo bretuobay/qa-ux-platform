@@ -34,6 +34,10 @@ function OrderDetail({ orderId }: { orderId: string }) {
         {ORDER_STATUS_LABELS[vm.order.status]} · payment {vm.order.paymentStatus}
       </p>
       <p className="mt-3 text-gray-800">{nextAction(vm.order.status)}</p>
+      <p className="mt-2 text-sm text-gray-600">
+        {vm.build ? `Build ${vm.build.version}` : 'No build attached yet.'}
+        {vm.blockers.length > 0 ? ` · Still needed: ${vm.blockers.join(', ')}` : ' · Readiness clear'}
+      </p>
 
       {vm.quotes.length > 0 ? (
         <section className="mt-6 rounded-lg border border-gray-200 bg-white p-4">

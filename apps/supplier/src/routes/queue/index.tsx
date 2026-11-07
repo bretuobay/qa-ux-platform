@@ -1,3 +1,4 @@
+import { Link } from 'react-router'
 import {
   eventRequiresReason,
   eventsFor,
@@ -39,7 +40,9 @@ export default function QueuePage() {
             const actions = eventsFor(order, 'operator').filter((event) => event !== 'issue_quote')
             return (
               <li key={order.id} className="rounded-lg border border-gray-200 bg-white p-4">
-                <p className="font-medium">{order.title}</p>
+                <Link to={`/orders/${order.id}`} className="font-medium hover:underline">
+                  {order.title}
+                </Link>
                 <p className="text-sm text-gray-500">
                   {ORDER_STATUS_LABELS[order.status]} · payment {order.paymentStatus} · {order.module}
                 </p>

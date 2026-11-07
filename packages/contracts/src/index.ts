@@ -1,4 +1,7 @@
 export * from './lifecycle.js'
+export * from './catalog.js'
+export * from './assignment.js'
+export * from './scenario.js'
 export * from './order.js'
 export * from './brief.js'
 export * from './quote.js'

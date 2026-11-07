@@ -30,7 +30,11 @@ const HAPPY_PATH: OrderEvent[] = [
 
 function advance(order: Order, events: OrderEvent[]): Order {
   return events.reduce((current, event) => {
-    const result = transitionOrder(current, event, { reason: 'pilot note' })
+    const result = transitionOrder(
+      current,
+      event,
+      event === 'mark_ready' ? { reason: 'pilot note', readinessClear: true } : { reason: 'pilot note' }
+    )
     if (!result.ok) throw new Error(result.error)
     return result.order
   }, order)
@@ -102,6 +106,20 @@ describe('transitionOrder', () => {
   it('rejects a skip from draft straight to in progress', () => {
     const result = transitionOrder(createOrder(baseInput), 'start')
     expect(result.ok).toBe(false)
+  })
+
+  it('refuses to leave readiness while blockers are open', () => {
+    const ready = advance(createOrder(baseInput), [
+      'submit',
+      'issue_quote',
+      'accept',
+      'request_payment',
+      'confirm_payment',
+    ])
+    const blocked = transitionOrder(ready, 'mark_ready')
+    expect(blocked.ok).toBe(false)
+    if (blocked.ok) return
+    expect(blocked.error).toMatch(/Readiness blockers/)
   })
 })
 
