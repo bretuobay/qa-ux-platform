@@ -1,3 +1,4 @@
+import { Link } from 'react-router'
 import { useDashboardViewModel } from './useDashboardViewModel.js'
 
 export default function DashboardPage() {
@@ -21,12 +22,18 @@ export default function DashboardPage() {
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
-      <h1 className="mb-6 text-2xl font-semibold text-gray-900">Supplier Dashboard</h1>
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-2xl font-semibold text-gray-900">Operator home</h1>
+        <Link to="/queue" className="text-sm text-blue-700 hover:underline">
+          Open queue
+        </Link>
+      </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <StatCard label="Active Orders" value={stats?.activeOrders ?? 0} colour="blue" />
-        <StatCard label="Open Findings" value={stats?.openFindings ?? 0} colour="amber" />
-        <StatCard label="Completed Orders" value={stats?.completedOrders ?? 0} colour="green" />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <StatCard label="Open orders" value={stats?.activeOrders ?? 0} colour="blue" />
+        <StatCard label="Waiting on a quote" value={stats?.awaitingQuote ?? 0} colour="amber" />
+        <StatCard label="Open findings" value={stats?.openFindings ?? 0} colour="amber" />
+        <StatCard label="Closed orders" value={stats?.completedOrders ?? 0} colour="green" />
       </div>
     </main>
   )

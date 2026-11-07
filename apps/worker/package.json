@@ -8,15 +8,18 @@
     "dev": "wrangler dev",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src",
+    "test": "vitest run",
     "deploy": "wrangler deploy"
   },
   "dependencies": {
     "hono": "^4.0.0",
-    "@qa-ux/contracts": "workspace:*"
+    "@qa-ux/contracts": "workspace:*",
+    "@qa-ux/domain": "workspace:*"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.0.0",
     "typescript": "^5.9.3",
+    "vitest": "^4.0.0",
     "wrangler": "^4.0.0"
   }
 }

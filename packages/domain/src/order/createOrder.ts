@@ -7,6 +7,7 @@ export function createOrder(input: CreateOrderInput): Order {
   return {
     ...parsed,
     id: globalThis.crypto.randomUUID(),
+    status: 'draft',
     createdAt: now,
     updatedAt: now,
   }

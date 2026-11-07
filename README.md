@@ -17,6 +17,11 @@ A monorepo for the QA and UX Beta Testing Platform — connecting organisations,
 | Testing | Vitest 4 + fast-check |
 | Linting | ESLint 9 flat config + Prettier |
 
+## Product docs
+
+- [Product requirements](product-docs/prd.md)
+- [Delivery phases](product-docs/phases.md) — Phase B1 (brief, quote, order lifecycle) is the current slice
+
 ## Packages
 
 | Package | Description |
@@ -38,6 +43,8 @@ pnpm dev
 
 The worker dev server runs at `http://localhost:8787`.  
 Buyer SPA at `http://localhost:5173`, supplier SPA at `http://localhost:5174`.
+
+Until sign-in exists, both SPAs send `X-Business-Id: a1b2c3d4-e5f6-4789-8abc-def012345678`. Briefs and orders are stored in the worker process and reset when it restarts.
 
 ## Environment variables
 

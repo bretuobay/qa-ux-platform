@@ -9,6 +9,7 @@ const baseInput: CreateOrderInput = {
   applicationId: 'b2c3d4e5-f6a7-4890-9bcd-ef0123456789',
   title: 'Smoke test run',
   description: 'Full regression pass',
+  module: 'qa_check',
   priority: 'medium',
   testerCount: 5,
 }
@@ -21,14 +22,10 @@ describe('createOrder', () => {
     )
   })
 
-  it('defaults status to draft when not provided', () => {
+  it('starts as a draft with payment still unpaid', () => {
     const order = createOrder(baseInput)
     expect(order.status).toBe('draft')
-  })
-
-  it('honours an explicit status of active', () => {
-    const order = createOrder({ ...baseInput, status: 'active' })
-    expect(order.status).toBe('active')
+    expect(order.paymentStatus).toBe('unpaid')
   })
 
   it('sets createdAt and updatedAt to the same instant', () => {
