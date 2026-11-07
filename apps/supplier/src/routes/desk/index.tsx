@@ -1,5 +1,5 @@
 import { Link, useParams } from 'react-router'
-import { READINESS_CHECKS } from '@qa-ux/contracts'
+import { READINESS_CHECKS, RETEST_RESULTS, REVIEW_OUTCOMES } from '@qa-ux/contracts'
 import { useOrderDeskViewModel } from './useOrderDeskViewModel.js'
 
 const LABELS: Record<(typeof READINESS_CHECKS)[number], string> = {
@@ -144,6 +144,100 @@ function Desk({ orderId }: { orderId: string }) {
             </li>
           ))}
         </ul>
+      </section>
+
+      <section className="rounded border border-gray-200 bg-white p-4">
+        <h2 className="font-medium">Findings</h2>
+        <p className="mt-1 text-sm text-gray-600">
+          Accept, ask for clarification, or mark the submission duplicate, invalid, or out of scope. A reason is required.
+          {vm.quality
+            ? ` Private record for the selected tester: ${vm.quality.accepted} accepted reviews, ${vm.quality.noShows} no-shows. Testers do not see this.`
+            : ''}
+        </p>
+        <div className="mt-3 grid gap-2">
+          <select className="rounded border px-3 py-2 text-sm" value={vm.reviewOutcome} onChange={(event) => vm.setReviewOutcome(event.target.value as typeof vm.reviewOutcome)}>
+            {REVIEW_OUTCOMES.map((outcome) => (
+              <option key={outcome} value={outcome}>{outcome}</option>
+            ))}
+          </select>
+          <input className="rounded border px-3 py-2 text-sm" aria-label="Review reason" value={vm.reviewReason} onChange={(event) => vm.setReviewReason(event.target.value)} />
+        </div>
+        <ul className="mt-4 space-y-4 text-sm">
+          {vm.findings.map((finding) => {
+            const latest = finding.reviews[finding.reviews.length - 1]
+            const appealOpen = Boolean(finding.appeal) && finding.reviews.length === 1
+            return (
+              <li key={finding.id} className="rounded border border-gray-100 p-3">
+                <p className="font-medium">{finding.title}</p>
+                <p className="text-gray-600">
+                  {finding.type}
+                  {finding.severity ? ` · severity ${finding.severity}` : ''}
+                  {finding.impact ? ` · impact ${finding.impact}` : ''}
+                  {' · priority '}
+                  {finding.customerPriority}
+                </p>
+                <p className="mt-1">Actual: {finding.actualBehavior}</p>
+                <p>Steps: {finding.steps}</p>
+                <p className="mt-1">Review: {latest ? `${latest.outcome} · ${latest.reason}` : 'waiting'}</p>
+                {finding.retests[0] ? <p>Retest: {finding.retests[finding.retests.length - 1]?.result}</p> : null}
+                {finding.reviews.length === 0 ? (
+                  <button type="button" className="mt-2 rounded bg-gray-900 px-3 py-2 text-white" onClick={() => vm.review(finding.id, false)}>
+                    Record review
+                  </button>
+                ) : null}
+                {appealOpen ? (
+                  <button type="button" className="mt-2 rounded bg-gray-900 px-3 py-2 text-white" onClick={() => vm.review(finding.id, true)}>
+                    Record the appeal review
+                  </button>
+                ) : null}
+                {latest?.outcome === 'accepted' ? (
+                  <form
+                    className="mt-3 grid gap-2"
+                    onSubmit={(event) => {
+                      event.preventDefault()
+                      vm.retest(finding.id)
+                    }}
+                  >
+                    <select className="rounded border px-3 py-2" value={vm.retestResult} onChange={(event) => vm.setRetestResult(event.target.value as typeof vm.retestResult)}>
+                      {RETEST_RESULTS.map((result) => (
+                        <option key={result} value={result}>{result}</option>
+                      ))}
+                    </select>
+                    <select className="rounded border px-3 py-2" aria-label="Replacement build" value={vm.retestBuildId} onChange={(event) => vm.setRetestBuildId(event.target.value)}>
+                      <option value="">Replacement build</option>
+                      {vm.builds.map((build) => (
+                        <option key={build.id} value={build.id}>{build.version}</option>
+                      ))}
+                    </select>
+                    <input className="rounded border px-3 py-2" placeholder="Retest note" value={vm.retestNotes} onChange={(event) => vm.setRetestNotes(event.target.value)} />
+                    <button type="submit" className="w-fit rounded border px-3 py-2">Record retest</button>
+                  </form>
+                ) : null}
+              </li>
+            )
+          })}
+        </ul>
+      </section>
+
+      <section className="rounded border border-gray-200 bg-white p-4">
+        <h2 className="font-medium">Report</h2>
+        <p className="mt-1 text-sm text-gray-600">
+          {vm.reports.length === 0
+            ? 'Publishing a version lets you deliver the order.'
+            : `${vm.reports.length} version${vm.reports.length === 1 ? '' : 's'} published.`}
+        </p>
+        <form
+          className="mt-3 grid gap-2"
+          onSubmit={(event) => {
+            event.preventDefault()
+            vm.publish()
+          }}
+        >
+          <input className="rounded border px-3 py-2 text-sm" aria-label="Objective" value={vm.objective} onChange={(event) => vm.setObjective(event.target.value)} />
+          <input className="rounded border px-3 py-2 text-sm" aria-label="Author" value={vm.authorName} onChange={(event) => vm.setAuthorName(event.target.value)} />
+          <input className="rounded border px-3 py-2 text-sm" aria-label="Reviewer" value={vm.reviewerName} onChange={(event) => vm.setReviewerName(event.target.value)} />
+          <button type="submit" className="w-fit rounded bg-gray-900 px-3 py-2 text-sm text-white">Publish report</button>
+        </form>
       </section>
     </main>
   )

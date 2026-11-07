@@ -74,9 +74,45 @@ export default function WorkPage() {
                 </button>
               </form>
             ) : null}
+            {assignment.status === 'accepted' ? (
+              <form
+                className="mt-4 grid gap-2 border-t border-gray-100 pt-3"
+                onSubmit={(event) => {
+                  event.preventDefault()
+                  vm.fileFinding(assignment)
+                }}
+              >
+                <p className="font-medium">Report a finding</p>
+                <input className="rounded border px-3 py-2" aria-label="Finding title" value={vm.findingTitle} onChange={(event) => vm.setFindingTitle(event.target.value)} />
+                <input className="rounded border px-3 py-2" aria-label="Actual behaviour" value={vm.findingActual} onChange={(event) => vm.setFindingActual(event.target.value)} />
+                <input className="rounded border px-3 py-2" aria-label="Expected behaviour" value={vm.findingExpected} onChange={(event) => vm.setFindingExpected(event.target.value)} />
+                <textarea className="rounded border px-3 py-2" aria-label="Finding steps" value={vm.findingSteps} onChange={(event) => vm.setFindingSteps(event.target.value)} />
+                <button type="submit" className="w-fit rounded bg-gray-900 px-3 py-2 text-white">File finding</button>
+              </form>
+            ) : null}
           </article>
         ))}
         {vm.submitted ? <p className="text-sm text-green-700">Result submitted.</p> : null}
+        {vm.filed ? <p className="text-sm text-green-700">Finding filed.</p> : null}
+        {vm.findings.map((finding) => {
+          const latest = finding.reviews[finding.reviews.length - 1]
+          return (
+            <article key={finding.id} className="rounded border border-gray-200 bg-white p-4 text-sm">
+              <p className="font-medium">{finding.title}</p>
+              <p>{latest ? `${latest.outcome} · ${latest.reason}` : 'Waiting for review'}</p>
+              <form
+                className="mt-2 flex gap-2"
+                onSubmit={(event) => {
+                  event.preventDefault()
+                  vm.commentOnFinding(finding.id)
+                }}
+              >
+                <input className="flex-1 rounded border px-3 py-2" aria-label="Reply" value={vm.findingComment} onChange={(event) => vm.setFindingComment(event.target.value)} />
+                <button type="submit" className="rounded border px-3 py-2">Reply</button>
+              </form>
+            </article>
+          )
+        })}
       </section>
     </main>
   )

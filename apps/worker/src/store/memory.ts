@@ -2,6 +2,7 @@ import type {
   Assignment,
   Brief,
   Execution,
+  Finding,
   Order,
   OrderActivity,
   ProductApplication,
@@ -9,6 +10,7 @@ import type {
   Quote,
   ReadinessItem,
   RecruitmentSlot,
+  Report,
   Scenario,
   TestEnvironment,
   TesterProfile,
@@ -31,6 +33,8 @@ const assignments = new Map<string, Assignment>()
 const slots = new Map<string, RecruitmentSlot>()
 const scenarios = new Map<string, Scenario>()
 const executions = new Map<string, Execution>()
+const findings = new Map<string, Finding>()
+const reports = new Map<string, Report>()
 
 export function resetMemoryStore(): void {
   orders.clear()
@@ -46,6 +50,8 @@ export function resetMemoryStore(): void {
   slots.clear()
   scenarios.clear()
   executions.clear()
+  findings.clear()
+  reports.clear()
 }
 
 export function saveBrief(brief: Brief): void {
@@ -234,4 +240,41 @@ export function hasSubmittedWork(businessId: string, orderId: string): boolean {
   return listExecutions(businessId).some(
     (execution) => execution.orderId === orderId && execution.status === 'submitted'
   )
+}
+
+export function saveFinding(finding: Finding): void {
+  findings.set(finding.id, finding)
+}
+
+export function listFindings(businessId: string, orderId?: string): Finding[] {
+  return [...findings.values()].filter(
+    (finding) => finding.businessId === businessId && (orderId ? finding.orderId === orderId : true)
+  )
+}
+
+export function getFinding(businessId: string, id: string): Finding | null {
+  const finding = findings.get(id)
+  if (!finding || finding.businessId !== businessId) return null
+  return finding
+}
+
+export function saveReport(report: Report): void {
+  const frozen = Object.freeze({
+    ...report,
+    coverage: Object.freeze({ ...report.coverage }),
+    findings: Object.freeze(report.findings.map((finding) => Object.freeze({ ...finding }))),
+  })
+  reports.set(report.id, frozen as Report)
+}
+
+export function listReports(businessId: string, orderId: string): Report[] {
+  return [...reports.values()]
+    .filter((report) => report.businessId === businessId && report.orderId === orderId)
+    .sort((left, right) => left.version - right.version)
+}
+
+export function getReport(businessId: string, id: string): Report | null {
+  const report = reports.get(id)
+  if (!report || report.businessId !== businessId) return null
+  return report
 }

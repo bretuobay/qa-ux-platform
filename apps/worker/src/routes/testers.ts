@@ -1,11 +1,18 @@
 import { Hono } from 'hono'
 import { CreateTesterProfileSchema, PlatformSchema } from '@qa-ux/contracts'
-import { isEligible, presentAssignment } from '@qa-ux/domain'
+import { isEligible, presentAssignment, qualityRecord } from '@qa-ux/domain'
 import type { Platform } from '@qa-ux/contracts'
 import type { WorkerEnv } from '../types/worker-env.js'
 import { businessMiddleware } from '../middleware/business.js'
 import { zodErrors } from './errors.js'
-import { getProfile, listAssignmentsForTester, listProfiles, saveProfile } from '../store/memory.js'
+import {
+  getProfile,
+  listAssignments,
+  listAssignmentsForTester,
+  listFindings,
+  listProfiles,
+  saveProfile,
+} from '../store/memory.js'
 
 const testers = new Hono<{ Bindings: WorkerEnv }>()
 testers.use('*', businessMiddleware)
@@ -57,6 +64,14 @@ testers.get('/me/assignments', (c) => {
   if (!userId) return c.json({ error: 'X-Tester-Id header is required' }, 400)
   const data = listAssignmentsForTester(userId).map((assignment) => presentAssignment(assignment, 'tester'))
   return c.json({ data })
+})
+
+testers.get('/:userId/quality', (c) => {
+  if (c.req.header('x-tester-id')) return c.json({ error: 'Quality records stay with the operator.' }, 403)
+  const userId = testerId(c.req.param('userId'))
+  if (!userId) return c.json({ error: 'Unknown tester' }, 400)
+  const businessId = c.get('businessId')
+  return c.json(qualityRecord(userId, listFindings(businessId), listAssignments(businessId)))
 })
 
 export { testers }

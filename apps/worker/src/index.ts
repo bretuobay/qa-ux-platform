@@ -5,6 +5,7 @@ import type { WorkerEnv } from './types/worker-env.js'
 import { auth } from './routes/auth.js'
 import { orders } from './routes/orders.js'
 import { findings } from './routes/findings.js'
+import { reports } from './routes/reports.js'
 import { briefs } from './routes/briefs.js'
 import { applications } from './routes/applications.js'
 import { testers } from './routes/testers.js'
@@ -36,6 +37,7 @@ app.route('/api/v1/assignments', assignments)
 app.route('/api/v1/scenarios', scenarios)
 app.route('/api/v1/executions', executions)
 app.route('/api/v1/findings', findings)
+app.route('/api/v1/reports', reports)
 
 app.notFound((c) => c.json({ error: 'Not found' }, 404))
 app.onError((err, c) => {

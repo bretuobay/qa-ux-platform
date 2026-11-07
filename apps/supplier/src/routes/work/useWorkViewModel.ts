@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { DEV_BUSINESS_ID, DEV_TESTER_ID } from '@qa-ux/contracts'
-import type { Execution, Scenario, TesterProfile } from '@qa-ux/contracts'
+import type { Execution, Finding, Order, Scenario, TesterProfile } from '@qa-ux/contracts'
 import type { AssignmentView } from '@qa-ux/domain'
 import { api } from '../../api.js'
 
@@ -20,6 +20,11 @@ export function useWorkViewModel() {
   const [notes, setNotes] = useState('Completed the journey. No defect found.')
   const [fileName, setFileName] = useState('invoice.png')
   const [sizeBytes, setSizeBytes] = useState('180000')
+  const [findingTitle, setFindingTitle] = useState('Checkout stays on the spinner')
+  const [findingActual, setFindingActual] = useState('The pay button never finishes')
+  const [findingExpected, setFindingExpected] = useState('A receipt is shown')
+  const [findingSteps, setFindingSteps] = useState('Open the invoice and tap Pay')
+  const [findingComment, setFindingComment] = useState('')
 
   const profile = useQuery({
     queryKey: ['tester-profile'],
@@ -63,6 +68,56 @@ export function useWorkViewModel() {
     mutationFn: (id: string) => testerApi(`/api/v1/assignments/${id}/accept`, { method: 'POST' }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['my-assignments'] })
+    },
+  })
+
+  const findings = useQuery({
+    queryKey: ['my-findings', assignments.data?.data.map((item) => item.orderId).join(',')],
+    enabled: Boolean(assignments.data),
+    queryFn: async () => {
+      const orderIds = [...new Set((assignments.data?.data ?? []).map((item) => item.orderId))]
+      const lists = await Promise.all(
+        orderIds.map((orderId) => testerApi<{ data: Finding[] }>(`/api/v1/findings?orderId=${orderId}`))
+      )
+      return lists.flatMap((list) => list.data)
+    },
+    staleTime: 0,
+  })
+
+  const fileFinding = useMutation({
+    mutationFn: async (assignment: AssignmentView) => {
+      const detail = await testerApi<{ order: Order }>(`/api/v1/orders/${assignment.orderId}`)
+      if (!detail.order.buildId) throw new Error('Attach a build before filing a finding.')
+      return testerApi('/api/v1/findings', {
+        method: 'POST',
+        body: JSON.stringify({
+          orderId: assignment.orderId,
+          type: 'bug',
+          title: findingTitle,
+          steps: findingSteps,
+          expectedBehavior: findingExpected,
+          actualBehavior: findingActual,
+          buildId: detail.order.buildId,
+          reproducibility: 'always',
+          severity: 'high',
+          journey: 'Pay an invoice',
+        }),
+      })
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['my-findings'] })
+    },
+  })
+
+  const commentOnFinding = useMutation({
+    mutationFn: (id: string) =>
+      testerApi(`/api/v1/findings/${id}/comments`, {
+        method: 'POST',
+        body: JSON.stringify({ body: findingComment }),
+      }),
+    onSuccess: async () => {
+      setFindingComment('')
+      await queryClient.invalidateQueries({ queryKey: ['my-findings'] })
     },
   })
 
@@ -113,6 +168,20 @@ export function useWorkViewModel() {
     setFileName,
     sizeBytes,
     setSizeBytes,
+    findingTitle,
+    setFindingTitle,
+    findingActual,
+    setFindingActual,
+    findingExpected,
+    setFindingExpected,
+    findingSteps,
+    setFindingSteps,
+    findingComment,
+    setFindingComment,
+    findings: findings.data ?? [],
+    fileFinding: (assignment: AssignmentView) => fileFinding.mutate(assignment),
+    commentOnFinding: (id: string) => commentOnFinding.mutate(id),
+    filed: fileFinding.isSuccess,
     saveProfile: () => saveProfile.mutate(),
     accept: (id: string) => accept.mutate(id),
     run: (assignment: AssignmentView) => run.mutate({ assignment }),
@@ -121,6 +190,8 @@ export function useWorkViewModel() {
       (saveProfile.error instanceof Error && saveProfile.error) ||
       (accept.error instanceof Error && accept.error) ||
       (run.error instanceof Error && run.error) ||
+      (fileFinding.error instanceof Error && fileFinding.error) ||
+      (commentOnFinding.error instanceof Error && commentOnFinding.error) ||
       null,
     submitted: run.isSuccess,
   }

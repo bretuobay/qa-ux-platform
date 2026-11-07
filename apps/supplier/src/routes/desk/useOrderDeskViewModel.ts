@@ -1,9 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import type { ProductApplication, ProductBuild, ReadinessCheck, Scenario, TesterProfile } from '@qa-ux/contracts'
-import type { AssignmentView } from '@qa-ux/domain'
-import { READINESS_CHECKS } from '@qa-ux/contracts'
-import type { Coverage } from '@qa-ux/domain'
+import type {
+  Finding,
+  ProductApplication,
+  ProductBuild,
+  ReadinessCheck,
+  Report,
+  RetestResult,
+  ReviewOutcome,
+  Scenario,
+  TesterProfile,
+} from '@qa-ux/contracts'
+import { DEV_APPEAL_OPERATOR_ID, READINESS_CHECKS } from '@qa-ux/contracts'
+import type { AssignmentView, Coverage, QualityRecord } from '@qa-ux/domain'
 import { api } from '../../api.js'
 
 type CheckMap = Record<ReadinessCheck, boolean>
@@ -20,6 +29,14 @@ export function useOrderDeskViewModel(orderId: string) {
   const [expected, setExpected] = useState('')
   const [accessSecret, setAccessSecret] = useState('')
   const [replaceReason, setReplaceReason] = useState('')
+  const [reviewOutcome, setReviewOutcome] = useState<ReviewOutcome>('accepted')
+  const [reviewReason, setReviewReason] = useState('Reproduced on the attached build')
+  const [retestResult, setRetestResult] = useState<RetestResult>('fixed')
+  const [retestBuildId, setRetestBuildId] = useState('')
+  const [retestNotes, setRetestNotes] = useState('')
+  const [objective, setObjective] = useState('Learn whether the named journeys finish')
+  const [authorName, setAuthorName] = useState('Operator')
+  const [reviewerName, setReviewerName] = useState('Reviewer')
 
   const order = useQuery({
     queryKey: ['order', orderId],
@@ -57,6 +74,22 @@ export function useOrderDeskViewModel(orderId: string) {
     queryFn: () => api<{ data: AssignmentView[] }>(`/api/v1/assignments?orderId=${orderId}`),
     staleTime: 0,
   })
+  const findings = useQuery({
+    queryKey: ['findings', orderId],
+    queryFn: () => api<{ data: Finding[] }>(`/api/v1/findings?orderId=${orderId}`),
+    staleTime: 0,
+  })
+  const reports = useQuery({
+    queryKey: ['reports', orderId],
+    queryFn: () => api<{ data: Report[] }>(`/api/v1/reports?orderId=${orderId}`),
+    staleTime: 0,
+  })
+  const quality = useQuery({
+    queryKey: ['quality', testerId],
+    enabled: Boolean(testerId),
+    queryFn: () => api<QualityRecord>(`/api/v1/testers/${testerId}/quality`),
+    staleTime: 0,
+  })
   const scenarios = useQuery({
     queryKey: ['scenarios', orderId],
     queryFn: () => api<{ data: Scenario[]; coverage: Coverage }>(`/api/v1/scenarios?orderId=${orderId}`),
@@ -67,6 +100,9 @@ export function useOrderDeskViewModel(orderId: string) {
     await queryClient.invalidateQueries({ queryKey: ['order', orderId] })
     await queryClient.invalidateQueries({ queryKey: ['assignments', orderId] })
     await queryClient.invalidateQueries({ queryKey: ['scenarios', orderId] })
+    await queryClient.invalidateQueries({ queryKey: ['findings', orderId] })
+    await queryClient.invalidateQueries({ queryKey: ['reports', orderId] })
+    await queryClient.invalidateQueries({ queryKey: ['quality', testerId] })
   }
 
   const saveReadiness = useMutation({
@@ -122,8 +158,38 @@ export function useOrderDeskViewModel(orderId: string) {
     },
   })
 
+  const review = useMutation({
+    mutationFn: (input: { id: string; appeal: boolean }) =>
+      api(`/api/v1/findings/${input.id}/review`, {
+        method: 'POST',
+        ...(input.appeal ? { headers: { 'x-operator-id': DEV_APPEAL_OPERATOR_ID } } : {}),
+        body: JSON.stringify({ outcome: reviewOutcome, reason: reviewReason }),
+      }),
+    onSuccess: refresh,
+  })
+  const retest = useMutation({
+    mutationFn: (id: string) =>
+      api(`/api/v1/findings/${id}/retest`, {
+        method: 'POST',
+        body: JSON.stringify({
+          result: retestResult,
+          buildId: retestBuildId,
+          ...(retestNotes.trim() ? { notes: retestNotes.trim() } : {}),
+        }),
+      }),
+    onSuccess: refresh,
+  })
+  const publish = useMutation({
+    mutationFn: () =>
+      api(`/api/v1/reports`, {
+        method: 'POST',
+        body: JSON.stringify({ orderId, objective, authorName, reviewerName }),
+      }),
+    onSuccess: refresh,
+  })
+
   const error =
-    [saveReadiness.error, attach.error, offer.error, replace.error, addScenario.error].find(
+    [saveReadiness.error, attach.error, offer.error, replace.error, addScenario.error, review.error, retest.error, publish.error].find(
       (item) => item instanceof Error
     ) ?? null
 
@@ -135,6 +201,9 @@ export function useOrderDeskViewModel(orderId: string) {
     assignments: assignments.data?.data ?? [],
     scenarios: scenarios.data?.data ?? [],
     coverage: scenarios.data?.coverage,
+    findings: findings.data?.data ?? [],
+    reports: reports.data?.data ?? [],
+    quality: quality.data,
     checks,
     setCheck: (check: ReadinessCheck, passed: boolean) => setChecks((current) => ({ ...current, [check]: passed })),
     buildId,
@@ -156,6 +225,25 @@ export function useOrderDeskViewModel(orderId: string) {
     offer: () => offer.mutate(),
     replace: (id: string) => replace.mutate(id),
     addScenario: () => addScenario.mutate(),
+    reviewOutcome,
+    setReviewOutcome,
+    reviewReason,
+    setReviewReason,
+    retestResult,
+    setRetestResult,
+    retestBuildId,
+    setRetestBuildId,
+    retestNotes,
+    setRetestNotes,
+    objective,
+    setObjective,
+    authorName,
+    setAuthorName,
+    reviewerName,
+    setReviewerName,
+    review: (id: string, appeal: boolean) => review.mutate({ id, appeal }),
+    retest: (id: string) => retest.mutate(id),
+    publish: () => publish.mutate(),
     isLoading: order.isLoading,
     error: error instanceof Error ? error : null,
   }

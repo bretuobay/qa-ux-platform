@@ -15,6 +15,7 @@ import {
   listQuotes,
   listQuotesForOrder,
   listReadiness,
+  listReports,
   saveEvent,
   saveOrder,
   saveQuote,
@@ -125,6 +126,9 @@ orders.post('/:id/transition', async (c) => {
   if (reason) meta.reason = reason
   if (event === 'mark_ready') {
     meta.readinessClear = readinessBlockers(listReadiness(businessId, order.id), order).length === 0
+  }
+  if (event === 'deliver') {
+    meta.reportPublished = listReports(businessId, order.id).length > 0
   }
   const result = transitionOrder(order, event, meta)
   if (!result.ok) return c.json({ error: result.error }, 409)

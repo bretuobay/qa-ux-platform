@@ -5,6 +5,8 @@ export interface TransitionMeta {
   reason?: string
   /** Required for mark_ready. The route sets this from the readiness checklist. */
   readinessClear?: boolean
+  /** Required for deliver. The route sets this when a report version exists. */
+  reportPublished?: boolean
 }
 
 export type TransitionResult =
@@ -109,6 +111,10 @@ export function transitionOrder(
       ok: false,
       error: 'Readiness blockers are still open. Payment alone does not start delivery.',
     }
+  }
+
+  if (event === 'deliver' && meta.reportPublished !== true) {
+    return { ok: false, error: 'Publish a report version before delivering the order.' }
   }
 
   const next: Order = { ...order, status, updatedAt: now }
